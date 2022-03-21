@@ -9,3 +9,7 @@ node_modules/
 environments
 /environments
 environments/
+
+dist
+dist/
+/dist
