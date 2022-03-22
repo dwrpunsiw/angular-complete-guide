@@ -67,14 +67,6 @@ export class AuthService {
       );
   }
 
-  autoLogout(expirationDuration: number) {
-    this.timer = setTimeout(() => {
-      this.logout();
-      const confirmLogout = confirm('Your session has ended');
-      this.router.navigate(['./auth']);
-    }, expirationDuration);
-  }
-
   autoLogin() {
     const userData: {
       email: string;
@@ -95,7 +87,7 @@ export class AuthService {
     if (loadedUser.token) {
       // this.user.next(loadedUser);
       this.store.dispatch(
-        new authActions.Login({
+        new authActions.AuthenticateSuccess({
           email: loadedUser.email,
           userId: loadedUser.id,
           token: loadedUser.token,
@@ -119,7 +111,7 @@ export class AuthService {
     const user = new User(email, userId, token, expirationDate);
     // this.user.next(user);
     this.store.dispatch(
-      new authActions.Login({
+      new authActions.AuthenticateSuccess({
         email,
         userId,
         token,
@@ -156,11 +148,26 @@ export class AuthService {
   logout() {
     // this.user.next(null);
     this.store.dispatch(new authActions.Logout());
+    // this.router.navigate(['/auth']);
     localStorage.removeItem('userData');
     if (this.timer) {
       clearTimeout(this.timer);
     }
     this.timer = null;
+  }
+
+  autoLogout(expirationDuration: number) {
+    this.timer = setTimeout(() => {
+      // this.logout();
+      this.store.dispatch(new authActions.Logout());
+    }, expirationDuration);
+  }
+
+  clearLogoutTimer() {
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
   }
 
   private handleError(errorRes: HttpErrorResponse) {

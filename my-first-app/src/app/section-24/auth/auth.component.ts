@@ -27,6 +27,7 @@ export class AuthComponent implements OnInit, OnDestroy {
   @ViewChild(PlaceHolderDirective, { static: false })
   alertHost: PlaceHolderDirective;
   private hostSubscription: Subscription;
+  private storeSub: Subscription;
 
   constructor(
     private authService: AuthService,
@@ -40,12 +41,21 @@ export class AuthComponent implements OnInit, OnDestroy {
     this.isLoginMode = !this.isLoginMode;
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.storeSub = this.store.select('auth').subscribe((authState) => {
+      this.isLoading = authState.loading;
+      this.error = authState.authError;
+      if (this.error) {
+        this.showError(this.error);
+      }
+    });
+  }
 
   ngOnDestroy(): void {
     if (this.hostSubscription) {
       this.hostSubscription.unsubscribe();
     }
+    this.storeSub.unsubscribe();
   }
 
   onSubmit(form: NgForm) {
@@ -57,7 +67,7 @@ export class AuthComponent implements OnInit, OnDestroy {
     // console.log(form.value);
     const { email, password } = form.value;
 
-    let authObs: Observable<AuthResponseData>;
+    // let authObs: Observable<AuthResponseData>;
 
     this.isLoading = true;
     if (this.isLoginMode) {
@@ -66,28 +76,30 @@ export class AuthComponent implements OnInit, OnDestroy {
         new AuthActions.LoginStart({ email: email, password: password })
       );
     } else {
-      authObs = this.authService.signup(email, password);
+      // authObs = this.authService.signup(email, password);
+      this.store.dispatch(new AuthActions.SignupStart({ email, password }));
     }
 
-    authObs.subscribe(
-      (resData) => {
-        this.isLoading = false;
-        console.log(resData);
-        this.router.navigate(['./recipes']);
-      },
-      (errorMessage) => {
-        console.log(errorMessage);
-        this.isLoading = false;
-        this.showError(errorMessage);
-        this.error = errorMessage;
-      }
-    );
+    // authObs.subscribe(
+    //   (resData) => {
+    //     this.isLoading = false;
+    //     console.log(resData);
+    //     this.router.navigate(['./recipes']);
+    //   },
+    //   (errorMessage) => {
+    //     console.log(errorMessage);
+    //     this.isLoading = false;
+    //     this.showError(errorMessage);
+    //     this.error = errorMessage;
+    //   }
+    // );
 
     form.reset();
   }
 
   onClose() {
-    this.error = null;
+    // this.error = null;
+    this.store.dispatch(new AuthActions.ClearError());
   }
 
   private showError(message: string) {
